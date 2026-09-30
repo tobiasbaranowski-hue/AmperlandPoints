@@ -1,0 +1,903 @@
+# AGENTS.md
+
+Kurvenrudel: Motorrad-Community-Webseite (Deutsch) mit öffentlicher Seite, Mitgliederbereich und mobiler Admin-App. **Weiterarbeit anhand von `PLAN.md`** (nächster Schritt: Meilenstein 2).
+Knieschleifer Amperland: Motorrad-Community-Webseite (Deutsch) mit öffentlicher Seite, Mitgliederbereich und mobiler Admin-App. **Weiterarbeit anhand von `PLAN.md`** (nächster Schritt: Meilenstein 2).
+
+## Stack
+TanStack Start + Router (file-based routes in `src/routes`), React 19, Tailwind CSS 4 (Theme-Tokens in `src/styles.css`: `asphalt-*`, `ember-*`, `chalk`, Fonts Barlow / Barlow Condensed), lucide-react Icons, Netlify.
+- `src/routes/admin.tsx` – mobile Admin-App (Bottom-Tabs, Bottom-Sheets, eigene Form-Bausteine unten in der Datei)
+- `src/data/fixtures.ts` – Typen + alle Demo-Daten
+- `src/data/store.ts` – `useCommunity()` / `setState()`; localStorage-basierter Demo-Speicher (useSyncExternalStore, Server-Snapshot = Fixtures)
+- `src/components/` – SiteHeader/Logo, SectionTitle, Avatar
+- `src/components/` – SiteHeader/Logo, SectionTitle, Avatar, Stars (Bewertung), TrackMap (GPX-Vorschau als SVG)
+- `src/lib/activity.ts` – GPX-Parser, Foto-Verkleinerung, `photoSrc()`, Challenge-Rangliste, Punkte-Ranking
+- `src/lib/format.ts` – `img()` (Image-CDN-URL), `formatDate()` (de-DE), `cn()`
+- `public/img/*.png` – generierte Fotos, immer über `img(name, width)` einbinden
+- `public/manifest.webmanifest`, `public/icon.svg` – PWA für die Admin-App (start_url `/admin`)
+## Wichtige Entscheidungen
+- Rollen (`gast`/`mitglied`/`admin`) sind aktuell nur Demo-Zustand im Store – keine echte Sicherheit. Wird mit Netlify Identity ersetzt.
+- Persistenz gehört in Netlify Database (Drizzle, `db/schema.ts`); der Store ist die einzige Stelle, die ausgetauscht werden muss.
+- Touren-Fotos werden im Demo als verkleinerte JPEG-Data-URLs im localStorage gespeichert (max. 4 pro Tour); `setState()` liefert `false`, wenn der Speicher voll ist.
+- Challenge-km kommen ausschließlich aus hochgeladenen Touren im Challenge-Zeitraum; `member.km` ist nur der Gesamt-Tachostand.
+- Keine Komponenten aus Route-Dateien exportieren (Code-Splitting).
+- UI-Texte auf Deutsch.
+
+PLAN.mdchanged
++12-6
+
+# Kurvenrudel – Roadmap
+# Knieschleifer Amperland – Roadmap
+
+Kurvenrudel ist eine Webseite für eine Motorrad-Community mit öffentlicher Startseite, Mitgliederbereich und einer mobilen Admin-App, über die Inhalte gesteuert werden.
+Knieschleifer Amperland ist eine Webseite für eine Motorrad-Community mit öffentlicher Startseite, Mitgliederbereich und einer mobilen Admin-App, über die Inhalte gesteuert werden.
+
+## Meilenstein 1 – Produktoberfläche ✅
+- Öffentliche Startseite mit Hinweis-Banner, Hero, Ausfahrten, News, Über uns
+- Anmelde-/Registrierungsseite mit Vorschau-Zugang (Mitglied / Admin)
+- Mitgliederbereich: Ausfahrten buchen, interne News, Mitgliederliste
+- Mobile Admin-App (`/admin`, als Home-Bildschirm-App installierbar): Beiträge, Termine, Mitglieder-Freischaltung, Startseiten-Texte
+- Mitgliederbereich: Ausfahrten buchen, interne News, Mitgliederliste, und direkte Punkte-Auswertung auf der Startseite (Hero-Status, Ranglisten-Podium, Kategorien-Aufschlüsselung & Historie)
+- Anmeldeseite mit 1-Klick-Schnellzugang für Mitglieder (einheitliche Sicht für alle Fahrer) und Admin-Zugang
+- Mitgliederverwaltung: Ausschließlich durch den Admin steuerbar (Mitglieder direkt in der Admin-App anlegen, editieren und entfernen; keine offene Registrierung)
+- Mobile Admin-App (`/admin`, als Home-Bildschirm-App installierbar): Beiträge, Termine, Mitglieder anlegen & verwalten, Startseiten-Texte
+- Touren: Mitglieder laden gefahrene Touren mit GPX-Datei (km werden berechnet), Fotos, Sterne-Bewertung und Kommentar hoch
+- Kilometer-Challenge mit Zeitraum und Ziel pro Mitglied; km zählen automatisch aus den Touren, Rangliste im Mitgliederbereich
+- Punkte-System: Admin vergibt Punkte mit Begründung (Einzeln, Schnellauswahl, alle Teilnehmer einer Ausfahrt) und sieht „zuletzt aktiv“ / „ruhig“
+- Level- & Abzeichen-System (Badges): 5 Rangstufen (Rookie bis Knieschleifer-Legende) mit Fortschrittsanzeige sowie freischaltbare Community-Abzeichen für Ausfahrten, Kilometer, GPX-Uploads, Fotos und Werkstatt-Einsatz; Anzeige im Mitgliederbereich und in der Admin-App
+- Daten liegen derzeit als Demo im Browser (`src/data/fixtures.ts` + `src/data/store.ts`)
+
+## Meilenstein 2 – Echte Konten & Rollen
+- Geschützte Routen `/mitglieder` und `/admin` serverseitig absichern
+
+## Meilenstein 3 – Datenbank
+- Netlify Database (Postgres + Drizzle): Tabellen `members`, `posts`, `rides`, `ride_attendees`, `site_content`
+- Netlify Database (Postgres + Drizzle): Tabellen `members`, `posts`, `rides`, `ride_attendees`, `site_content`, `tours`, `tour_photos`, `point_entries`, `challenges`
+- Seed mit den heutigen Demo-Daten
+
+## Meilenstein 4 – Server-Funktionen
+- `useCommunity()` durch Loader/Server-Funktionen ersetzen; Startseite serverseitig rendern
+
+## Meilenstein 5 – Medien & App-Komfort
+- Bild-Upload für Beiträge und Termine (Netlify Blobs + Image CDN)
+- Bild-Upload für Beiträge und Termine sowie Tour-Fotos und GPX-Dateien (Netlify Blobs + Image CDN) – ersetzt die verkleinerten Data-URLs im Demo-Speicher
+- Offline-fähiger Service Worker für die Admin-App, echte PNG-App-Icons
+- E-Mail-Benachrichtigung bei neuen Mitgliedsanfragen und neuen Terminen
+
+README.mdchanged
++1-1
+
+# Kurvenrudel – Motorrad-Community
+# Knieschleifer Amperland – Motorrad-Community
+
+Webseite für eine Motorrad-Community mit drei Bereichen:
+
+public/icon.svgchanged
++1-1
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#151513"/><path d="M96 360c60 0 90-40 120-100s70-110 200-110" fill="none" stroke="#f47a1f" stroke-width="44" stroke-linecap="round"/><path d="M110 404h292" stroke="#f1ece2" stroke-width="18" stroke-linecap="round" stroke-dasharray="40 28"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#151513"/><path d="M96 360c60 0 90-40 120-100s70-110 200-110" fill="none" stroke="#43a453" stroke-width="44" stroke-linecap="round"/><path d="M110 404h292" stroke="#f1ece2" stroke-width="18" stroke-linecap="round" stroke-dasharray="40 28"/></svg>
+
+public/img/bg-custom.jpegadded
+public/manifest.webmanifestchanged
++3-3
+
+{
+  "name": "Kurvenrudel Admin",
+  "short_name": "Kurvenrudel",
+  "description": "Mobile App zum Verwalten der Kurvenrudel-Webseite",
+  "name": "Knieschleifer Amperland Admin",
+  "short_name": "Knieschleifer",
+  "description": "Mobile App zum Verwalten der Knieschleifer-Amperland-Webseite",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+
+src/components/LevelBadge.tsxadded
++103
+
+import { Award, Camera, Compass, Flag, Flame, Gauge, Lock, Map, Trophy, Wrench, Shield, Check } from 'lucide-react'
+import type { Badge, LevelInfo } from '@/lib/activity'
+import { cn } from '@/lib/format'
+
+const BADGE_ICONS = {
+  flag: Flag,
+  compass: Compass,
+  gauge: Gauge,
+  camera: Camera,
+  wrench: Wrench,
+  trophy: Trophy,
+  award: Award,
+  flame: Flame,
+  map: Map,
+}
+
+export function LevelPill({ level, size = 'md' }: { level: LevelInfo; size?: 'sm' | 'md' | 'lg' }) {
+  const isSm = size === 'sm'
+  const isLg = size === 'lg'
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full font-semibold border',
+        level.level === 1 && 'bg-asphalt-800/80 border-white/10 text-chalk/70',
+        level.level === 2 && 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
+        level.level === 3 && 'bg-amber-500/10 border-amber-500/30 text-amber-400',
+        level.level === 4 && 'bg-ember-500/15 border-ember-500/40 text-ember-400',
+        level.level >= 5 && 'bg-purple-500/15 border-purple-500/40 text-purple-400 shadow-sm shadow-purple-500/20',
+        isSm ? 'px-2 py-0.5 text-[11px]' : isLg ? 'px-3.5 py-1 text-sm' : 'px-2.5 py-0.5 text-xs',
+      )}
+    >
+      <Shield className={cn(isSm ? 'h-3 w-3' : isLg ? 'h-4 w-4' : 'h-3.5 w-3.5', 'shrink-0')} />
+      <span>Lvl {level.level} · {level.title}</span>
+    </span>
+  )
+}
+
+export function BadgeCard({ badge }: { badge: Badge }) {
+  const Icon = BADGE_ICONS[badge.icon] ?? Award
+  const progressPct = badge.progress ? Math.min(100, Math.round((badge.progress.current / badge.progress.max) * 100)) : 100
+
+  return (
+    <div
+      className={cn(
+        'relative flex flex-col justify-between overflow-hidden rounded-2xl border p-4 transition',
+        badge.unlocked
+          ? 'border-ember-500/30 bg-gradient-to-b from-ember-500/10 to-asphalt-900 shadow-md shadow-ember-950/40'
+          : 'border-white/5 bg-asphalt-900/60 opacity-75',
+      )}
+    >
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <div
+            className={cn(
+              'flex h-11 w-11 items-center justify-center rounded-xl transition',
+              badge.unlocked
+                ? 'bg-ember-500/20 text-ember-400 ring-1 ring-ember-500/40'
+                : 'bg-asphalt-800 text-chalk/30',
+            )}
+          >
+            <Icon className="h-5 w-5" />
+          </div>
+          {badge.unlocked ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-ember-500/15 px-2 py-0.5 text-[11px] font-semibold text-ember-400">
+              <Check className="h-3 w-3" /> Freigeschaltet
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-asphalt-800 px-2 py-0.5 text-[11px] font-medium text-chalk/40">
+              <Lock className="h-3 w-3" /> Gesperrt
+            </span>
+          )}
+        </div>
+
+        <h4 className={cn('mt-3 font-display text-lg font-bold uppercase', badge.unlocked ? 'text-chalk' : 'text-chalk/60')}>
+          {badge.title}
+        </h4>
+        <p className="mt-1 text-xs text-chalk/50 leading-relaxed">{badge.description}</p>
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-white/5">
+        {badge.unlocked ? (
+          <div className="flex items-center justify-between text-xs text-ember-400/90 font-medium">
+            <span>Erreicht</span>
+            <span>✓</span>
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center justify-between text-xs text-chalk/50">
+              <span>Fortschritt</span>
+              <span>
+                {badge.progress.current} / {badge.progress.max} {badge.progress.unit ?? ''}
+              </span>
+            </div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-asphalt-800">
+              <div className="h-full rounded-full bg-ember-500/70 transition-all" style={{ width: `${progressPct}%` }} />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+src/components/SiteHeader.tsxchanged
++1-1
+
+  return (
+    <Link to="/" className="flex items-center gap-2.5">
+      <img src="/icon.svg" alt="" className="h-8 w-8" />
+      <span className="font-display text-2xl font-bold uppercase tracking-wide">Kurvenrudel</span>
+      <span className="font-display text-xl font-bold uppercase tracking-wide sm:text-2xl">Knieschleifer Amperland</span>
+    </Link>
+  )
+}
+
+src/components/Stars.tsxadded
++18
+
+import { Star } from 'lucide-react'
+import { cn } from '@/lib/format'
+
+/** Sterne-Bewertung; mit onChange wird sie zur Eingabe. */
+export function Stars({ value, onChange, size = 'sm' }: { value: number; onChange?: (v: number) => void; size?: 'sm' | 'lg' }) {
+  return (
+    <div className="flex gap-0.5" aria-label={`${value} von 5 Sternen`}>
+      {[1, 2, 3, 4, 5].map((n) => {
+        const icon = <Star className={cn(size === 'lg' ? 'h-8 w-8' : 'h-4 w-4', n <= value ? 'fill-ember-400 text-ember-400' : 'text-chalk/20')} />
+        return onChange ? (
+          <button type="button" key={n} onClick={() => onChange(n)} aria-label={`${n} Sterne`} className="p-0.5 transition active:scale-90">{icon}</button>
+        ) : (
+          <span key={n}>{icon}</span>
+        )
+      })}
+    </div>
+  )
+}
+
+src/components/TrackMap.tsxadded
++32
+
+import { cn } from '@/lib/format'
+
+/** Schematische Vorschau einer GPX-Spur (ohne Kartenhintergrund). */
+export function TrackMap({ track, className }: { track: Array<[number, number]>; className?: string }) {
+  if (track.length < 2) return null
+  const midLat = track.reduce((s, [lat]) => s + lat, 0) / track.length
+  const k = Math.cos((midLat * Math.PI) / 180)
+  const xs = track.map(([, lon]) => lon * k)
+  const ys = track.map(([lat]) => -lat)
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys)
+  const span = Math.max(maxX - minX, maxY - minY) || 1
+  const W = 200, H = 120, pad = 10
+  const scale = Math.min((W - pad * 2) / (maxX - minX || span), (H - pad * 2) / (maxY - minY || span))
+  const ox = (W - (maxX - minX) * scale) / 2, oy = (H - (maxY - minY) * scale) / 2
+  const pts = xs.map((x, i) => [(x - minX) * scale + ox, (ys[i] - minY) * scale + oy])
+  const d = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join('')
+  const [sx, sy] = pts[0]
+  const [ex, ey] = pts[pts.length - 1]
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className={cn('bg-asphalt-800', className)} role="img" aria-label="Streckenverlauf">
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0H0V20" fill="none" stroke="currentColor" strokeOpacity=".06" />
+        </pattern>
+      </defs>
+      <rect width={W} height={H} fill="url(#grid)" className="text-chalk" />
+      <path d={d} fill="none" stroke="var(--color-ember-500)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={sx} cy={sy} r="4" fill="var(--color-chalk)" />
+      <circle cx={ex} cy={ey} r="3" fill="var(--color-ember-400)" />
+    </svg>
+  )
+}
+
+src/data/fixtures.tschanged
++87-13
+
+// Demo-Daten für Kurvenrudel. Alle Inhalte liegen gebündelt hier, damit sie
+// Demo-Daten für Knieschleifer Amperland. Alle Inhalte liegen gebündelt hier, damit sie
+// in einem späteren Schritt durch die Netlify Database ersetzt werden können.
+
+export type Role = 'gast' | 'mitglied' | 'admin'
+  role: 'mitglied' | 'admin'
+  status: 'aktiv' | 'wartet'
+  km: number
+  customPassword?: string
+}
+
+/** Von einem Mitglied gefahrene und hochgeladene Tour. */
+export interface Tour {
+  id: string
+  memberId: string
+  title: string
+  date: string
+  distanceKm: number
+  /** 1–5 Sterne */
+  rating: number
+  comment: string
+  /** Bildname aus public/img oder (bei Uploads) verkleinerte Data-URL */
+  photos: string[]
+  /** Vereinfachte GPX-Spur als [lat, lon]-Paare */
+  track: Array<[number, number]>
+  gpxName?: string
+  calimotoUrl?: string
+  kurvigerUrl?: string
+}
+
+/** Vom Admin vergebene Punkte (positiv oder negativ) mit Begründung. */
+export interface PointEntry {
+  id: string
+  memberId: string
+  points: number
+  reason: string
+  date: string
+}
+
+export interface Challenge {
+  title: string
+  start: string
+  end: string
+  /** Ziel pro Mitglied in km */
+  goalKm: number
+}
+
+export interface CommunityState {
+  posts: Post[]
+  rides: Ride[]
+  members: Member[]
+  tours: Tour[]
+  points: PointEntry[]
+  challenge: Challenge
+}
+
+// Erzeugt eine plausible Rundstrecke rund ums Amperland für die Demo-Touren.
+function demoTrack(lat: number, lon: number, radius: number, wobble: number): Array<[number, number]> {
+  const pts: Array<[number, number]> = []
+  for (let i = 0; i <= 60; i++) {
+    const a = (i / 60) * Math.PI * 2
+    const r = radius * (1 + 0.25 * Math.sin(a * wobble))
+    pts.push([+(lat + r * Math.sin(a)).toFixed(5), +(lon + r * 1.5 * Math.cos(a)).toFixed(5)])
+  }
+  return pts
+}
+
+export const initialState: CommunityState = {
+  content: {
+    heroTitle: 'Gemeinsam in die nächste Kurve.',
+    heroSubtitle:
+      'Kurvenrudel ist die Community für alle, die lieber Landstraße als Autobahn fahren. Ausfahrten, Schrauberabende und Stammtische – offen für jedes Bike.',
+      'Knieschleifer Amperland ist die Community für alle, die lieber Landstraße als Autobahn fahren. Ausfahrten, Schrauberabende und Stammtische – offen für jedes Bike.',
+    aboutText:
+      'Gegründet 2019 von vier Freunden mit einer Thermoskanne und einer Karte voller Passstraßen. Heute sind wir über 140 Fahrerinnen und Fahrer aus der ganzen Region – vom Wiedereinsteiger bis zum Tourenprofi. Wir fahren im eigenen Tempo, niemand wird zurückgelassen.',
+    announcement: 'Saisonabschluss am 18. Oktober – Anmeldung im Mitgliederbereich!',
+      id: 'p-3',
+      title: 'Intern: Neue Club-Jacken bestellen',
+      excerpt: 'Sammelbestellung läuft bis Ende Oktober. Größentabelle im Beitrag.',
+      body: 'Die neuen Jacken mit Rudel-Patch sind da. Bestellung bitte über den Vorstand, Preis 89 € für Mitglieder.',
+      body: 'Die neuen Jacken mit Knieschleifer-Patch sind da. Bestellung bitte über den Vorstand, Preis 89 € für Mitglieder.',
+      date: '2026-09-10',
+      author: 'Markus',
+      published: true,
+      title: 'Herbstrunde durchs Mittelgebirge',
+      date: '2026-10-05',
+      time: '09:30',
+      meetingPoint: 'Tankstelle Waldblick, B27',
+      meetingPoint: 'Tankstelle Waldblick, B471',
+      distanceKm: 220,
+      level: 'Entspannt',
+      description: 'Gemütliche Runde mit Mittagspause im Landgasthof. Ideal für Neue.',
+    },
+  ],
+  members: [
+    { id: 'm-1', name: 'Markus Brandt', bike: 'BMW R 1250 GS', city: 'Freiburg', since: '2019', role: 'admin', status: 'aktiv', km: 18400 },
+    { id: 'm-2', name: 'Jana Keller', bike: 'Yamaha MT-07', city: 'Offenburg', since: '2020', role: 'mitglied', status: 'aktiv', km: 9200 },
+    { id: 'm-3', name: 'Deniz Aydın', bike: 'Triumph Street Triple', city: 'Lahr', since: '2021', role: 'mitglied', status: 'aktiv', km: 12100 },
+    { id: 'm-4', name: 'Sophie Wagner', bike: 'Honda CB650R', city: 'Emmendingen', since: '2022', role: 'mitglied', status: 'aktiv', km: 6800 },
+    { id: 'm-5', name: 'Tom Richter', bike: 'KTM 890 Adventure', city: 'Kehl', since: '2023', role: 'mitglied', status: 'aktiv', km: 15300 },
+    { id: 'm-6', name: 'Lea Hoffmann', bike: 'Ducati Scrambler', city: 'Freiburg', since: '2024', role: 'mitglied', status: 'aktiv', km: 4100 },
+    { id: 'm-7', name: 'Paul Schneider', bike: 'Kawasaki Z900RS', city: 'Waldkirch', since: '2025', role: 'mitglied', status: 'aktiv', km: 3900 },
+    { id: 'm-8', name: 'Nina Berger', bike: 'Royal Enfield Interceptor', city: 'Achern', since: '2026', role: 'mitglied', status: 'wartet', km: 0 },
+    { id: 'm-9', name: 'Felix Maier', bike: 'Suzuki V-Strom 650', city: 'Bühl', since: '2026', role: 'mitglied', status: 'wartet', km: 0 },
+    { id: 'm-1', name: 'Markus Brandt', bike: 'BMW R 1250 GS', city: 'Dachau', since: '2019', role: 'admin', status: 'aktiv', km: 18400 },
+    { id: 'm-2', name: 'Jana Keller', bike: 'Yamaha MT-07', city: 'Fürstenfeldbruck', since: '2020', role: 'mitglied', status: 'aktiv', km: 9200 },
+    { id: 'm-3', name: 'Deniz Aydın', bike: 'Triumph Street Triple', city: 'Olching', since: '2021', role: 'mitglied', status: 'aktiv', km: 12100 },
+    { id: 'm-4', name: 'Sophie Wagner', bike: 'Honda CB650R', city: 'Bergkirchen', since: '2022', role: 'mitglied', status: 'aktiv', km: 6800 },
+    { id: 'm-5', name: 'Tom Richter', bike: 'KTM 890 Adventure', city: 'Allershausen', since: '2023', role: 'mitglied', status: 'aktiv', km: 15300 },
+    { id: 'm-6', name: 'Lea Hoffmann', bike: 'Ducati Scrambler', city: 'Dachau', since: '2024', role: 'mitglied', status: 'aktiv', km: 4100 },
+    { id: 'm-7', name: 'Paul Schneider', bike: 'Kawasaki Z900RS', city: 'Moosburg', since: '2025', role: 'mitglied', status: 'aktiv', km: 3900 },
+    { id: 'm-8', name: 'Nina Berger', bike: 'Royal Enfield Interceptor', city: 'Emmering', since: '2026', role: 'mitglied', status: 'wartet', km: 0 },
+    { id: 'm-9', name: 'Felix Maier', bike: 'Suzuki V-Strom 650', city: 'Hebertshausen', since: '2026', role: 'mitglied', status: 'wartet', km: 0 },
+  ],
+  tours: [
+    { id: 't-1', memberId: 'm-3', title: 'Ammersee-Runde mit Andechs-Stopp', date: '2026-09-20', distanceKm: 186, rating: 5, comment: 'Traumwetter, kaum Verkehr. Die Kurven hinter Herrsching sind ein Gedicht.', photos: ['tour', 'hero'], track: demoTrack(48.02, 11.2, 0.18, 5), gpxName: 'ammersee.gpx' },
+    { id: 't-2', memberId: 'm-2', title: 'Feierabendrunde Glonntal', date: '2026-09-17', distanceKm: 94, rating: 4, comment: 'Kurz, knackig, ein paar Rollsplitt-Stellen bei Petershausen.', photos: ['treffen'], track: demoTrack(48.38, 11.4, 0.1, 3), gpxName: 'glonntal.gpx' },
+    { id: 't-3', memberId: 'm-5', title: 'Kesselberg & Walchensee', date: '2026-09-13', distanceKm: 312, rating: 5, comment: 'Früh los, damit der Kesselberg noch frei ist. Lohnt sich jedes Mal.', photos: ['hero'], track: demoTrack(47.7, 11.3, 0.3, 4) },
+    { id: 't-4', memberId: 'm-1', title: 'Hallertau-Hopfentour', date: '2026-09-06', distanceKm: 228, rating: 4, comment: 'Hopfenernte in vollem Gange – Traktoren einplanen!', photos: ['tour'], track: demoTrack(48.55, 11.7, 0.2, 6) },
+    { id: 't-5', memberId: 'm-4', title: 'Erste Solo-Tour nach dem Führerschein', date: '2026-08-30', distanceKm: 118, rating: 3, comment: 'Etwas nervös, aber mega Spaß. Nächstes Mal in der Gruppe!', photos: [], track: [] },
+    { id: 't-6', memberId: 'm-3', title: 'Altmühltal-Wochenende', date: '2026-08-23', distanceKm: 540, rating: 5, comment: 'Zwei Tage, drei Burgen, ein platter Hinterreifen.', photos: ['werkstatt', 'tour'], track: demoTrack(48.95, 11.4, 0.35, 7) },
+    { id: 't-7', memberId: 'm-6', title: 'Lechfeld-Landstraßen', date: '2026-08-15', distanceKm: 142, rating: 4, comment: '', photos: [], track: demoTrack(48.2, 10.95, 0.15, 4) },
+    { id: 't-8', memberId: 'm-2', title: 'Tegernsee über Sudelfeld', date: '2026-07-26', distanceKm: 276, rating: 5, comment: 'Sudelfeld am Sonntag: voll, aber immer noch schön.', photos: ['hero'], track: demoTrack(47.68, 11.85, 0.28, 5) },
+    { id: 't-9', memberId: 'm-7', title: 'Isartal bis Bad Tölz', date: '2026-07-12', distanceKm: 164, rating: 4, comment: 'Biergarten-Stopp in Wolfratshausen empfehlenswert.', photos: [], track: [] },
+    { id: 't-10', memberId: 'm-5', title: 'Bayerischer Wald Tagestour', date: '2026-06-28', distanceKm: 620, rating: 4, comment: 'Langer Tag, Hintern tut weh, würde es wieder tun.', photos: ['tour'], track: demoTrack(48.9, 12.9, 0.4, 5) },
+  ],
+  points: [
+    { id: 'pt-1', memberId: 'm-2', points: 30, reason: 'Drei-Pässe-Tour geplant und geführt', date: '2026-09-22' },
+    { id: 'pt-2', memberId: 'm-5', points: 15, reason: 'Beim Schrauberabend geholfen', date: '2026-09-18' },
+    { id: 'pt-3', memberId: 'm-3', points: 10, reason: 'An Ausfahrt teilgenommen', date: '2026-09-22' },
+    { id: 'pt-4', memberId: 'm-4', points: 10, reason: 'An Ausfahrt teilgenommen', date: '2026-09-22' },
+    { id: 'pt-5', memberId: 'm-6', points: 20, reason: 'Fotos für die Webseite gemacht', date: '2026-09-10' },
+    { id: 'pt-6', memberId: 'm-3', points: 10, reason: 'An Ausfahrt teilgenommen', date: '2026-08-23' },
+    { id: 'pt-7', memberId: 'm-7', points: 5, reason: 'Stammtisch besucht', date: '2026-09-04' },
+    { id: 'pt-8', memberId: 'm-2', points: 10, reason: 'An Ausfahrt teilgenommen', date: '2026-08-23' },
+  ],
+  challenge: { title: 'Saison-Challenge 2026', start: '2026-03-01', end: '2026-10-31', goalKm: 2000 },
+}
+
+src/data/store.tschanged
++11-6
+
+// So wirken Änderungen aus der Admin-App sofort auf der Webseite.
+// Wird im nächsten Meilenstein durch Server-Funktionen + Netlify Database ersetzt.
+
+const KEY = 'kurvenrudel-demo-v1'
+const KEY = 'knieschleifer-amperland-demo-v2'
+let state: CommunityState = initialState
+let loaded = false
+const listeners = new Set<() => void>()
+  }
+}
+
+// Gibt false zurück, wenn der Browser-Speicher voll ist (z. B. zu viele Fotos).
+// Die Änderung wird dann verworfen, damit Anzeige und Speicher übereinstimmen.
+export function setState(update: (s: CommunityState) => CommunityState) {
+export function setState(update: (s: CommunityState) => CommunityState): boolean {
+  load()
+  state = update(state)
+  const next = update(state)
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(state))
+  } catch {
+    // storage full or disabled
+    window.localStorage.setItem(KEY, JSON.stringify(next))
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') return false
+    // Speicher deaktiviert: nur im Arbeitsspeicher weiterarbeiten
+  }
+  state = next
+  listeners.forEach((l) => l())
+  return true
+}
+
+export function resetDemo() {
+
+src/lib/activity.tsadded
++302
+
+import type { CommunityState, Member } from '@/data/fixtures'
+import { img } from './format'
+
+/* ---------- GPX ---------- */
+
+export interface ParsedGpx {
+  name?: string
+  date?: string
+  distanceKm: number
+  track: Array<[number, number]>
+}
+
+const toRad = (d: number) => (d * Math.PI) / 180
+
+function haversineKm([lat1, lon1]: [number, number], [lat2, lon2]: [number, number]) {
+  const dLat = toRad(lat2 - lat1)
+  const dLon = toRad(lon2 - lon1)
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+/** Liest Track- oder Routenpunkte aus einer GPX-Datei und berechnet die Strecke. */
+export function parseGpx(xml: string): ParsedGpx {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml')
+  if (doc.querySelector('parsererror')) throw new Error('Keine gültige GPX-Datei')
+  let nodes = Array.from(doc.getElementsByTagName('trkpt'))
+  if (nodes.length === 0) nodes = Array.from(doc.getElementsByTagName('rtept'))
+  const points = nodes
+    .map((n) => [Number(n.getAttribute('lat')), Number(n.getAttribute('lon'))] as [number, number])
+    .filter(([a, b]) => Number.isFinite(a) && Number.isFinite(b))
+  if (points.length < 2) throw new Error('Die GPX-Datei enthält keine Strecke')
+
+  let km = 0
+  for (let i = 1; i < points.length; i++) km += haversineKm(points[i - 1], points[i])
+
+  // Für Speicher und Vorschau auf höchstens ~200 Punkte ausdünnen
+  const step = Math.max(1, Math.ceil(points.length / 200))
+  const track = points
+    .filter((_, i) => i % step === 0 || i === points.length - 1)
+    .map(([a, b]) => [+a.toFixed(5), +b.toFixed(5)] as [number, number])
+
+  const name = doc.querySelector('trk > name, rte > name, metadata > name')?.textContent?.trim() || undefined
+  const time = doc.querySelector('trkpt > time, metadata > time')?.textContent?.slice(0, 10)
+  return { name, date: time && /^\d{4}-\d{2}-\d{2}$/.test(time) ? time : undefined, distanceKm: Math.round(km), track }
+}
+
+/* ---------- Fotos ---------- */
+
+/** Verkleinert ein Foto im Browser und gibt es als JPEG-Data-URL zurück (Demo-Speicher). */
+export function compressImage(file: File, maxSize = 900, quality = 0.72): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    image.onload = () => {
+      const scale = Math.min(1, maxSize / Math.max(image.width, image.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(image.width * scale)
+      canvas.height = Math.round(image.height * scale)
+      canvas.getContext('2d')?.drawImage(image, 0, 0, canvas.width, canvas.height)
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL('image/jpeg', quality))
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Bild konnte nicht gelesen werden'))
+    }
+    image.src = url
+  })
+}
+
+/** Fotos sind entweder Namen aus public/img oder hochgeladene Data-URLs. */
+export const photoSrc = (photo: string, w: number) => (photo.startsWith('data:') ? photo : img(photo, w))
+
+/* ---------- Auswertungen ---------- */
+
+export interface Standing {
+  member: Member
+  km: number
+  tours: number
+}
+
+/** Kilometer-Rangliste aller aktiven Mitglieder im Challenge-Zeitraum. */
+export function challengeStandings({ tours, members, challenge }: CommunityState): Standing[] {
+  return members
+    .filter((m) => m.status === 'aktiv')
+    .map((member) => {
+      const own = tours.filter((t) => t.memberId === member.id && t.date >= challenge.start && t.date <= challenge.end)
+      return { member, km: own.reduce((sum, t) => sum + t.distanceKm, 0), tours: own.length }
+    })
+    .sort((a, b) => b.km - a.km)
+}
+
+export interface PointsTotal {
+  member: Member
+  points: number
+  lastDate?: string
+}
+
+/** Punktestand aller aktiven Mitglieder, höchster zuerst. */
+export function pointsRanking({ points, members }: CommunityState): PointsTotal[] {
+  return members
+    .filter((m) => m.status === 'aktiv')
+    .map((member) => {
+      const own = points.filter((p) => p.memberId === member.id)
+      return {
+        member,
+        points: own.reduce((sum, p) => sum + p.points, 0),
+        lastDate: own.map((p) => p.date).sort().at(-1),
+      }
+    })
+    .sort((a, b) => b.points - a.points)
+}
+
+/* ---------- Level-System ---------- */
+
+export interface LevelDef {
+  level: number
+  title: string
+  minPoints: number
+  desc: string
+  color: string
+}
+
+export const LEVELS: LevelDef[] = [
+  { level: 1, title: 'Rookie', minPoints: 0, desc: 'Einstieg in die Amperland-Community', color: 'text-chalk/70' },
+  { level: 2, title: 'Straßenfeger', minPoints: 25, desc: 'Erste Ausfahrten & Engagement', color: 'text-emerald-400' },
+  { level: 3, title: 'Kurvenjäger', minPoints: 50, desc: 'Fester Bestandteil der Truppe', color: 'text-amber-400' },
+  { level: 4, title: 'Leitwolf', minPoints: 100, desc: 'Organisiert Touren & hilft aktiv', color: 'text-ember-400' },
+  { level: 5, title: 'Knieschleifer-Legende', minPoints: 200, desc: 'Echte Legende im Amperland', color: 'text-purple-400' },
+]
+
+export interface LevelInfo {
+  level: number
+  title: string
+  desc: string
+  color: string
+  currentPoints: number
+  minPoints: number
+  nextLevel: LevelDef | null
+  progressPct: number
+  pointsToNext: number
+}
+
+export function getMemberLevel(points: number): LevelInfo {
+  const pts = Math.max(0, points)
+  let current = LEVELS[0]
+  for (const lvl of LEVELS) {
+    if (pts >= lvl.minPoints) current = lvl
+  }
+  const currentIndex = LEVELS.findIndex((l) => l.level === current.level)
+  const next = currentIndex < LEVELS.length - 1 ? LEVELS[currentIndex + 1] : null
+
+  let progressPct = 100
+  let pointsToNext = 0
+  if (next) {
+    const range = next.minPoints - current.minPoints
+    const gained = pts - current.minPoints
+    progressPct = Math.min(100, Math.max(0, Math.round((gained / range) * 100)))
+    pointsToNext = Math.max(0, next.minPoints - pts)
+  }
+
+  return {
+    level: current.level,
+    title: current.title,
+    desc: current.desc,
+    color: current.color,
+    currentPoints: pts,
+    minPoints: current.minPoints,
+    nextLevel: next,
+    progressPct,
+    pointsToNext,
+  }
+}
+
+/* ---------- Abzeichen / Badges ---------- */
+
+export type BadgeCategory = 'rides' | 'tours' | 'community' | 'points'
+
+export interface Badge {
+  id: string
+  title: string
+  description: string
+  category: BadgeCategory
+  icon: 'flag' | 'compass' | 'gauge' | 'camera' | 'wrench' | 'trophy' | 'award' | 'flame' | 'map'
+  unlocked: boolean
+  progress: {
+    current: number
+    max: number
+    unit?: string
+  }
+}
+
+export function getMemberBadges(memberId: string, state: CommunityState): Badge[] {
+  const member = state.members.find((m) => m.id === memberId)
+  if (!member) return []
+
+  const ownTours = state.tours.filter((t) => t.memberId === memberId)
+  const ownPoints = state.points.filter((p) => p.memberId === memberId)
+  const totalPoints = ownPoints.reduce((sum, p) => sum + p.points, 0)
+  const totalTourKm = ownTours.reduce((sum, t) => sum + t.distanceKm, 0)
+  const attendedRides = state.rides.filter((r) => r.attendees.includes(memberId)).length
+  const toursWithTrack = ownTours.filter((t) => t.track && t.track.length > 0).length
+  const toursWithPhotos = ownTours.filter((t) => t.photos && t.photos.length > 0).length
+  const hasPhotoPoints = ownPoints.some((p) => p.reason.toLowerCase().includes('foto'))
+  const hasWrenchActivity =
+    ownPoints.some((p) => p.reason.toLowerCase().includes('schraub') || p.reason.toLowerCase().includes('werkstatt')) ||
+    state.rides.some((r) => r.attendees.includes(memberId) && r.title.toLowerCase().includes('schrauber'))
+  const hasTourGuideActivity =
+    ownPoints.some((p) =>
+      p.reason.toLowerCase().includes('geplant') ||
+      p.reason.toLowerCase().includes('geführt') ||
+      p.reason.toLowerCase().includes('organisiert'),
+    ) || ownTours.length >= 3
+
+  const ranking = pointsRanking(state)
+  const topIndex = ranking.findIndex((r) => r.member.id === memberId)
+  const isTop3 = topIndex >= 0 && topIndex < 3 && totalPoints > 0
+
+  return [
+    {
+      id: 'erste-ausfahrt',
+      title: 'Startklar',
+      description: 'An mindestens einer gemeinsamen Club-Ausfahrt teilgenommen.',
+      category: 'rides',
+      icon: 'flag',
+      unlocked: attendedRides >= 1,
+      progress: { current: Math.min(1, attendedRides), max: 1, unit: 'Ausfahrt' },
+    },
+    {
+      id: 'meilenjaeger',
+      title: 'Meilenjäger',
+      description: 'Mindestens 500 km auf hochgeladenen Touren gesammelt.',
+      category: 'tours',
+      icon: 'gauge',
+      unlocked: totalTourKm >= 500,
+      progress: { current: Math.min(500, totalTourKm), max: 500, unit: 'km' },
+    },
+    {
+      id: 'kilometerfresser',
+      title: 'Kilometerfresser',
+      description: 'Stolze 1.000 km auf hochgeladenen Touren absolviert.',
+      category: 'tours',
+      icon: 'flame',
+      unlocked: totalTourKm >= 1000,
+      progress: { current: Math.min(1000, totalTourKm), max: 1000, unit: 'km' },
+    },
+    {
+      id: 'gpx-pionier',
+      title: 'GPX-Pionier',
+      description: 'Eigene Tour mit GPX-Streckenverlauf geteilt.',
+      category: 'tours',
+      icon: 'compass',
+      unlocked: toursWithTrack >= 1,
+      progress: { current: Math.min(1, toursWithTrack), max: 1, unit: 'Tour' },
+    },
+    {
+      id: 'bildfaenger',
+      title: 'Bildfänger',
+      description: 'Tour-Fotos hochgeladen oder Fotos für die Community beigesteuert.',
+      category: 'community',
+      icon: 'camera',
+      unlocked: toursWithPhotos >= 1 || hasPhotoPoints,
+      progress: { current: toursWithPhotos >= 1 || hasPhotoPoints ? 1 : 0, max: 1 },
+    },
+    {
+      id: 'schrauber-ehre',
+      title: 'Schrauber-Ehre',
+      description: 'Beim Schrauberabend geholfen oder Werkstatt-Support geleistet.',
+      category: 'community',
+      icon: 'wrench',
+      unlocked: hasWrenchActivity,
+      progress: { current: hasWrenchActivity ? 1 : 0, max: 1 },
+    },
+    {
+      id: 'tourguide',
+      title: 'Scout & Tourguide',
+      description: 'Tour geplant, geführt oder mindestens 3 Touren beigetragen.',
+      category: 'tours',
+      icon: 'map',
+      unlocked: hasTourGuideActivity,
+      progress: { current: hasTourGuideActivity ? 1 : 0, max: 1 },
+    },
+    {
+      id: 'kurven-sammler',
+      title: 'Kurven-Sammler',
+      description: 'Mindestens 50 Punkte für Engagement in der Community verdient.',
+      category: 'points',
+      icon: 'award',
+      unlocked: totalPoints >= 50,
+      progress: { current: Math.min(50, totalPoints), max: 50, unit: 'Punkte' },
+    },
+    {
+      id: 'podium',
+      title: 'Auf dem Treppchen',
+      description: 'Aktuell unter den Top 3 des Knieschleifer-Punkterankings.',
+      category: 'points',
+      icon: 'trophy',
+      unlocked: isTop3,
+      progress: { current: isTop3 ? 1 : 0, max: 1 },
+    },
+  ]
+}
+
+src/lib/points.tsadded
++27
+
+export interface PointRule {
+  reason: string
+  points: number
+  maxCount: number
+}
+
+export const POINT_RULES: PointRule[] = [
+  { reason: 'Stammtisch besucht', points: 5, maxCount: 5 },
+  { reason: 'Ausfahrt mitgefahren', points: 5, maxCount: 5 },
+  { reason: 'Eröffnungstour mitgefahren', points: 10, maxCount: 1 },
+  { reason: 'Abschlußtour mitgefahren', points: 10, maxCount: 1 },
+  { reason: 'Mehrtägige Tour', points: 15, maxCount: 1 },
+  { reason: 'Ausfahrt organisiert', points: 7.5, maxCount: 2 },
+  { reason: 'KS Event besucht', points: 10, maxCount: 2 },
+  { reason: 'Veranstaltung organisiert', points: 5, maxCount: 2 },
+  { reason: 'Neue Person zum Stammtisch mitgebracht', points: 3, maxCount: 2 },
+  { reason: 'Meiste Kilometer im Jahr gefahren', points: 5, maxCount: 1 },
+  { reason: 'Erste eigenen Ausfahrt organisiert', points: 5, maxCount: 1 },
+]
+
+export function getMemberRuleCounts(memberId: string, pointsEntries: { memberId: string; reason: string }[]): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const r of POINT_RULES) {
+    counts[r.reason] = pointsEntries.filter((p) => p.memberId === memberId && p.reason === r.reason).length
+  }
+  return counts
+}
+
+src/routeTree.gen.tsadded
++113
+
+/* eslint-disable */
+
+// @ts-nocheck
+
+// noinspection JSUnusedGlobalSymbols
+
+// This file was automatically generated by TanStack Router.
+// You should NOT make any changes in this file as it will be overwritten.
+// Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
+
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MitgliederRouteImport } from './routes/mitglieder'
+
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MitgliederRoute = MitgliederRouteImport.update({
+  id: '/mitglieder',
+  path: '/mitglieder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
+export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/login': typeof LoginRoute
+  '/mitglieder': typeof MitgliederRoute
+}
+export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/login': typeof LoginRoute
+  '/mitglieder': typeof MitgliederRoute
+}
+export interface FileRoutesById {
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/login': typeof LoginRoute
+  '/mitglieder': typeof MitgliederRoute
+}
+export interface FileRouteTypes {
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths: '/' | '/admin' | '/login' | '/mitglieder'
+  fileRoutesByTo: FileRoutesByTo
+  to: '/' | '/admin' | '/login' | '/mitglieder'
+  id: '__root__' | '/' | '/admin' | '/login' | '/mitglieder'
+  fileRoutesById: FileRoutesById
+}
+export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  LoginRoute: typeof LoginRoute
+  MitgliederRoute: typeof MitgliederRoute
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mitglieder': {
+      id: '/mitglieder'
+      path: '/mitglieder'
+      fullPath: '/mitglieder'
+      preLoaderRoute: typeof MitgliederRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
+}
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  LoginRoute: LoginRoute,
+  MitgliederRoute: MitgliederRoute,
+}
+export const routeTree = rootRouteImport
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
